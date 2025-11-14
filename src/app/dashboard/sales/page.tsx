@@ -132,7 +132,7 @@ export default function SalesPage() {
                   </div>
                 </CardContent>
               </Card>
-            )}
+            ))}
           </div>
         )}
       </main>
