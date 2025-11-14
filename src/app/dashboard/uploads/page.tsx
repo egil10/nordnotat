@@ -78,7 +78,7 @@ export default function UploadsPage() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground mb-4">
-                You haven't uploaded any documents yet.
+                You haven&apos;t uploaded any documents yet.
               </p>
               <Link href="/upload">
                 <Button>Upload Your First Document</Button>
