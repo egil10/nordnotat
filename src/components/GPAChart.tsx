@@ -10,9 +10,6 @@ interface GPAChartProps {
 }
 
 export function GPAChart({ data, type = "bar", title = "GPA Distribution" }: GPAChartProps) {
-  const ChartComponent = type === "bar" ? BarChart : LineChart
-  const DataComponent = type === "bar" ? Bar : Line
-
   return (
     <Card>
       <CardHeader>

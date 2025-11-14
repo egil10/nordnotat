@@ -83,14 +83,26 @@ export default function DocumentDetailPage() {
         }),
       })
 
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to create checkout session")
+      }
+
       const { sessionId } = await response.json()
 
-      const stripe = await stripePromise
-      if (stripe) {
-        await stripe.redirectToCheckout({ sessionId })
+      if (!sessionId) {
+        throw new Error("No session ID received")
       }
-    } catch (error) {
+
+      const stripe = await stripePromise
+      if (!stripe) {
+        throw new Error("Stripe is not configured. Please contact support.")
+      }
+
+      await stripe.redirectToCheckout({ sessionId })
+    } catch (error: any) {
       console.error("Error creating checkout session:", error)
+      alert(error.message || "Failed to process payment. Please try again.")
     } finally {
       setIsPurchasing(false)
     }

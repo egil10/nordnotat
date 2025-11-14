@@ -1,12 +1,11 @@
 import Stripe from 'stripe'
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not set')
-}
-
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2024-11-20.acacia',
-})
+// Only initialize Stripe if the secret key is available
+export const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2024-11-20.acacia',
+    })
+  : null
 
 const PLATFORM_FEE_PERCENTAGE = 0.10 // 10%
 const SELLER_PERCENTAGE = 0.90 // 90%
@@ -27,6 +26,10 @@ export async function createCheckoutSession(
   successUrl: string,
   cancelUrl: string
 ) {
+  if (!stripe) {
+    throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY.')
+  }
+
   const { platformFee, sellerAmount } = calculateFees(amount)
 
   const session = await stripe.checkout.sessions.create({

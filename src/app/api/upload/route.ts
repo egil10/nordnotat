@@ -17,12 +17,28 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
-    const file = formData.get("file") as File
-    const title = formData.get("title") as string
-    const description = formData.get("description") as string
-    const course_code = formData.get("course_code") as string
-    const university = formData.get("university") as string
-    const price = parseInt(formData.get("price") as string)
+    const file = formData.get("file") as File | null
+    const title = formData.get("title") as string | null
+    const description = formData.get("description") as string | null
+    const course_code = formData.get("course_code") as string | null
+    const university = formData.get("university") as string | null
+    const priceStr = formData.get("price") as string | null
+
+    // Validate required fields
+    if (!file || !(file instanceof File)) {
+      return NextResponse.json({ error: "File is required" }, { status: 400 })
+    }
+    if (!title || title.trim() === "") {
+      return NextResponse.json({ error: "Title is required" }, { status: 400 })
+    }
+    if (!priceStr) {
+      return NextResponse.json({ error: "Price is required" }, { status: 400 })
+    }
+
+    const price = parseInt(priceStr)
+    if (isNaN(price) || price < 0) {
+      return NextResponse.json({ error: "Invalid price" }, { status: 400 })
+    }
 
     // Get user from cookies
     const cookieStore = await cookies()
@@ -31,10 +47,13 @@ export async function POST(request: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          getAll() {
-            return cookieStore.getAll()
+          get(name: string) {
+            return cookieStore.get(name)?.value
           },
-          setAll() {
+          set(name: string, value: string, options: any) {
+            // No-op for API routes - cookies are read-only here
+          },
+          remove(name: string, options: any) {
             // No-op for API routes
           },
         },
@@ -51,7 +70,15 @@ export async function POST(request: NextRequest) {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     // Extract text from PDF
-    const text = await extractTextFromPDF(file)
+    let text: string
+    try {
+      text = await extractTextFromPDF(file)
+    } catch (error) {
+      return NextResponse.json(
+        { error: "Failed to extract text from PDF. Please ensure the file is a valid PDF." },
+        { status: 400 }
+      )
+    }
 
     // Generate AI metadata
     const [summary, tags, courseCodes, difficulty, flashcards] = await Promise.all([
